@@ -34,9 +34,9 @@ if st.button("Analiz Et ve Özet Çıkar"):
         
         with st.spinner("Yapay zeka yorumları analiz ediyor..."):
             try:
-                # En kararlı ve güncel çalışan model ismi
+                # Güncel ve desteklenen model adı
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="gemini-3.5-flash",
                     contents=prompt
                 )
                 st.subheader("📌 Gemini Satın Alma Özeti")
