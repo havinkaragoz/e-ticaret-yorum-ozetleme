@@ -4,16 +4,15 @@ from google import genai
 # Sayfa ayarları
 st.set_page_config(page_title="Akıllı E-Ticaret Analiz Paneli", page_icon="🛒", layout="centered")
 
-# --- KUSURSUZ VE OKUNABİLİR ŞIK TASARIM (CSS) ---
+# --- ŞIK TASARIM İÇİN CSS KODLARI ---
 st.markdown("""
     <style>
-    /* Genel Arka Planı Ferah Bir Beyaz Yapalım */
     .stApp {
         background-color: #f8f9fa;
         color: #212529;
     }
     
-    /* Şık Başlık Kutusu */
+    /* Üst Başlık Kutusu */
     .header-box {
         background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
         padding: 30px;
@@ -34,14 +33,14 @@ st.markdown("""
         margin: 0;
     }
     
-    /* Etiketlerin (Label) Rengi ve Okunabilirliği */
+    /* Form Etiketleri */
     .stTextInput label, .stTextArea label {
         color: #374151 !important;
         font-weight: 600 !important;
         font-size: 15px !important;
     }
     
-    /* Girdi Kutularını Beyaz ve Net Yapalım */
+    /* Girdi Kutuları */
     .stTextInput input, .stTextArea textarea {
         background-color: #ffffff !important;
         color: #1f2937 !important;
@@ -49,12 +48,8 @@ st.markdown("""
         border-radius: 10px !important;
         padding: 10px !important;
     }
-    .stTextInput input:focus, .stTextArea textarea:focus {
-        border-color: #4f46e5 !important;
-        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1) !important;
-    }
     
-    /* Harika Mor/Mavi Buton */
+    /* Şık Buton */
     .stButton > button {
         background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
         color: white !important;
@@ -71,6 +66,29 @@ st.markdown("""
         transform: translateY(-2px);
         box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4) !important;
     }
+
+    /* Sonuç Kartları Tasarımı */
+    .result-card {
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .card-strong {
+        background-color: #ecfdf5;
+        border-left: 6px solid #10b981;
+        border: 1px solid #d1fae5;
+    }
+    .card-weak {
+        background-color: #fff1f2;
+        border-left: 6px solid #f43f5e;
+        border: 1px solid #ffe4e6;
+    }
+    .card-summary {
+        background-color: #eff6ff;
+        border-left: 6px solid #3b82f6;
+        border: 1px solid #dbeafe;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -78,7 +96,7 @@ st.markdown("""
 api_key = st.secrets["GEMINI_API_KEY"]
 client = genai.Client(api_key=api_key)
 
-# --- ŞIK BAŞLIK KUTUSU ---
+# Şık Başlık
 st.markdown("""
     <div class="header-box">
         <h1>🛒 Akıllı E-Ticaret Yorum ve Analiz Paneli</h1>
@@ -104,11 +122,23 @@ if st.button("🚀 Analiz Et ve Özet Çıkar"):
     else:
         yorumlar_listesi = [y.strip() for y in yorumlar_input.split("\n") if y.strip()]
         
+        # Yapay zekadan net bölümler halinde çıktı almasını isteyelim
         prompt = f"""
         Aşağıda '{urun_adi}' adlı ürün için yapılmış müşteri yorumları verilmiştir. 
-        Bu yorumları analiz ederek profesyonel bir "Gemini Satın Alma Özeti" çıkar. 
-        Güçlü ve zayıf yönleri başlıklar altında maddeler halinde özetle.
-        
+        Bu yorumları analiz et ve tam olarak şu 3 başlık altında yanıt ver (başlık isimlerini değiştirme):
+
+        ### GİRİŞ
+        (Genel bir değerlendirme cümlesi yaz)
+
+        ### GÜÇLÜ YÖNLER
+        (Maddeler halinde güçlü yönleri yaz)
+
+        ### ZAYIF YÖNLER
+        (Maddeler halinde zayıf yönleri yaz)
+
+        ### GENEL KARAR
+        (Sonuç ve satın alma tavsiyesi kararını yaz)
+
         Yorumlar:
         {yorumlar_listesi}
         """
@@ -120,24 +150,75 @@ if st.button("🚀 Analiz Et ve Özet Çıkar"):
                     contents=prompt
                 )
                 
-                st.markdown("<br>", unsafe_allow_html=True)
+                text = response.text
                 
-                # Sonuç İçin Okunaklı Şık Kutu
-                st.markdown(f"""
-                <div style="background-color: #ffffff; padding: 25px; border-radius: 12px; border: 1px solid #e5e7eb; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-                    <h3 style="color: #4f46e5; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #f3f4f6; padding-bottom: 10px;">📌 Gemini Satın Alma Özeti</h3>
-                    <div style="color: #374151; font-size: 15px; line-height: 1.6;">
-                        {response.text.replace(chr(10), '<br>')}
+                # Çıktıyı başlıklara göre akıllıca ayıralım
+                parts = {}
+                current_key = "GİRİŞ"
+                for line in text.split('\n'):
+                    if "GÜÇLÜ YÖNLER" in line.upper():
+                        current_key = "GÜÇLÜ YÖNLER"
+                        continue
+                    elif "ZAYIF YÖNLER" in line.upper():
+                        current_key = "ZAYIF YÖNLER"
+                        continue
+                    elif "GENEL KARAR" in line.upper():
+                        current_key = "GENEL KARAR"
+                        continue
+                    
+                    parts.setdefault(current_key, []).append(line)
+                
+                giris_text = "\n".join(parts.get("GİRİŞ", [])).strip()
+                guclu_text = "\n".join(parts.get("GÜÇLÜ YÖNLER", [])).strip()
+                zayif_text = "\n".join(parts.get("ZAYIF YÖNLER", [])).strip()
+                 karar_text = "\n".join(parts.get("GENEL KARAR", [])).strip()
+
+                st.markdown("---")
+                st.subheader("📌 Gemini Satın Alma Analiz Raporu")
+                
+                if giris_text:
+                    st.write(giris_text)
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                # 1. GÜÇLÜ YÖNLER KUTUSU (Yeşil Tema)
+                if guclu_text:
+                    st.markdown(f"""
+                    <div class="result-card card-strong">
+                        <h4 style="color: #065f46; margin-top: 0; margin-bottom: 10px;">💪 Güçlü Yönler</h4>
+                        <div style="color: #064e3b; font-size: 15px; line-height: 1.6;">
+                            {guclu_text.replace(chr(10), '<br>')}
+                        </div>
                     </div>
-                </div>
-                """, unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+
+                # 2. ZAYIF YÖNLER KUTUSU (Kırmızı/Pembe Tema)
+                if zayif_text:
+                    st.markdown(f"""
+                    <div class="result-card card-weak">
+                        <h4 style="color: #9f1239; margin-top: 0; margin-bottom: 10px;">⚠️ Zayıf Yönler / Eksikler</h4>
+                        <div style="color: #881337; font-size: 15px; line-height: 1.6;">
+                            {zayif_text.replace(chr(10), '<br>')}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # 3. GENEL KARAR KUTUSU (Mavi Tema)
+                if karar_text:
+                    st.markdown(f"""
+                    <div class="result-card card-summary">
+                        <h4 style="color: #1e40af; margin-top: 0; margin-bottom: 10px;">🎯 Genel Karar ve Tavsiye</h4>
+                        <div style="color: #1e3a8a; font-size: 15px; line-height: 1.6;">
+                            {karar_text.replace(chr(10), '<br>')}
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
                 
             except Exception as e:
                 st.error(f"❌ Bir hata oluştu: {e}")
 
-# Sol menü (Sidebar) şık görünüm
+# Sol menü (Sidebar)
 with st.sidebar:
     st.markdown("## ℹ️ Hakkında")
     st.info("Bu uygulama, e-ticaret yorumlarını yapay zeka ile analiz ederek güçlü ve zayıf yönleri hızlıca özetler.")
     st.markdown("---")
-    st.markdown("🎓 **Proje Sunumu İçin Hazır**")
+    st.markdown("🎓 **Proje Sunumuna Hazır!**")
