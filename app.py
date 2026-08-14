@@ -122,7 +122,6 @@ if st.button("🚀 Analiz Et ve Özet Çıkar"):
     else:
         yorumlar_listesi = [y.strip() for y in yorumlar_input.split("\n") if y.strip()]
         
-        # Yapay zekadan net bölümler halinde çıktı almasını isteyelim
         prompt = f"""
         Aşağıda '{urun_adi}' adlı ürün için yapılmış müşteri yorumları verilmiştir. 
         Bu yorumları analiz et ve tam olarak şu 3 başlık altında yanıt ver (başlık isimlerini değiştirme):
@@ -152,7 +151,6 @@ if st.button("🚀 Analiz Et ve Özet Çıkar"):
                 
                 text = response.text
                 
-                # Çıktıyı başlıklara göre akıllıca ayıralım
                 parts = {}
                 current_key = "GİRİŞ"
                 for line in text.split('\n'):
@@ -171,7 +169,7 @@ if st.button("🚀 Analiz Et ve Özet Çıkar"):
                 giris_text = "\n".join(parts.get("GİRİŞ", [])).strip()
                 guclu_text = "\n".join(parts.get("GÜÇLÜ YÖNLER", [])).strip()
                 zayif_text = "\n".join(parts.get("ZAYIF YÖNLER", [])).strip()
-                 karar_text = "\n".join(parts.get("GENEL KARAR", [])).strip()
+                karar_text = "\n".join(parts.get("GENEL KARAR", [])).strip()
 
                 st.markdown("---")
                 st.subheader("📌 Gemini Satın Alma Analiz Raporu")
